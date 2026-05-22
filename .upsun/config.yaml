@@ -9,8 +9,8 @@ applications:
                     allow: true
                     passthru: true
         size:
-            cpu: 1
-            memory: 2048
+            cpu: 0.25
+            memory: 512
 
 routes:
     "https://{default}/":
@@ -21,3 +21,8 @@ routes:
     "http://{default}/":
         type: redirect
         to: "https://{default}/"
+
+resources:
+    router:
+        cpu: 0.1
+        memory: 256
