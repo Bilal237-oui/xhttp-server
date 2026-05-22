@@ -7,9 +7,7 @@ applications:
             locations:
                 /:
                     passthru: true
-        size:
-            cpu: 1
-            memory: 2048
+        size: "1:2048"
 
 routes:
     "https://{default}/":
