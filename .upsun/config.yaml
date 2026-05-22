@@ -7,7 +7,6 @@ applications:
             locations:
                 /:
                     passthru: true
-        size: "1:2048"
 
 routes:
     "https://{default}/":
