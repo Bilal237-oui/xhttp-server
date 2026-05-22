@@ -1,7 +1,6 @@
 applications:
     app:
         type: nodejs:20
-        disk: 2048
         size: "S"
         web:
             commands:
