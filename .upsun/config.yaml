@@ -1,6 +1,9 @@
 applications:
     app:
         type: nodejs:20
+        size:
+            cpu: 0.5
+            memory: 1024
         web:
             commands:
                 start: node server.js
@@ -12,6 +15,9 @@ routes:
     "https://{default}/":
         type: upstream
         upstream: "app:http"
+        size:
+            cpu: 0.2
+            memory: 256
     "http://{default}/":
         type: redirect
         to: "https://{default}/"
