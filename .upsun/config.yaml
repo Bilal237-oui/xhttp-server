@@ -2,24 +2,13 @@ applications:
     app:
         type: nodejs:20
         disk: 2048
-        mounts:
-            /public:
-                source: local
-                source_path: public
+        size: "S"
         web:
             commands:
                 start: node server.js
             locations:
                 /:
                     passthru: true
-        # Ressources : à placer dans .upsun/config.yaml sous "resources"
-        
-# Les ressources pour l'application se définissent ici
-resources:
-    app:
-        cpu: 0.5
-        memory: 1024
-    # Pour le routeur, les ressources se règlent via "routes" différemment
 
 routes:
     "https://{default}/":
