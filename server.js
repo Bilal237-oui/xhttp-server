@@ -1,23 +1,23 @@
 const http = require('http');
 const https = require('https');
 
-// === CONFIGURATION POUR L'ANCIEN PROJET ===
-const VPS_HOST = '139.99.123.120';                      // IP du VPS
-const VPS_PORT = 80;                                    // Port du VPS
-const UUID = '26eaa396-8fd5-4038-af70-6bbd415ac766';    // UUID
-const VPS_IP = '139.99.123.120';                        // IP pour la route
+// === CONFIGURATION ===
+const VPS_HOST = 'ultrategateworld.benbilal237free.xyz';  // Domaine du VPS
+const VPS_PORT = 80;                                      // Port du VPS
+const UUID = '031486c2-7daa-456e-b8e5-e22a594a980f';      // UUID
+const VPS_IP = '188.213.28.174';                          // IP pour la route
 const PORT = process.env.PORT || 8080;
 
 // Paramètres XHTTP
-const XHTTP_PATH = '/vless';
+const XHTTP_PATH = '/';
 const XHTTP_MODE = 'auto';
 const XHTTP_PADDING = '100-1000';
-const HOST_HEADER = 'main-bvxea6i-pruzdyu5roans.fr-3.platformsh.site';  // Ancien domaine Upsun
+const HOST_HEADER = 'main-bvxea6i-pruzdyu5roans.fr-3.platformsh.site';
 const SNI = 'main-bvxea6i-pruzdyu5roans.fr-3.platformsh.site';
 const ALPN = ['h2', 'http/1.1', 'h3'];
 const FP = 'chrome';
 
-// Domaine Upsun (ancien)
+// Domaine Upsun
 const DOMAIN = process.env.DOMAIN || 'main-bvxea6i-pruzdyu5roans.fr-3.platformsh.site';
 
 console.log('==========================================');
@@ -25,7 +25,6 @@ console.log('🚀 Bridge XHTTP - Upsun → VPS');
 console.log(`📡 VPS cible: ${VPS_HOST}:${VPS_PORT}`);
 console.log(`🔑 UUID: ${UUID}`);
 console.log(`🌐 Domaine Upsun: ${DOMAIN}`);
-console.log(`🛣️  Path: ${XHTTP_PATH}`);
 console.log(`🖨️  Fingerprint: ${FP}`);
 console.log('==========================================');
 
@@ -42,7 +41,7 @@ const server = http.createServer((req, res) => {
     
     // Générer le lien VLESS
     if (url === `/${UUID}` || url === '/config' || url === `/${VPS_IP}`) {
-        const vlessLink = `vless://${UUID}@${VPS_HOST}:${VPS_PORT}?type=xhttp&encryption=none&path=${encodeURIComponent(XHTTP_PATH)}&host=${HOST_HEADER}&mode=${XHTTP_MODE}&x_padding_bytes=${XHTTP_PADDING}&extra=%7B%22xPaddingBytes%22%3A%22${XHTTP_PADDING}%22%7D&security=none&fp=${FP}&alpn=${ALPN.join('%2C')}&sni=${SNI}&flow=xtls-rprx-vision#VLESS-XHTTP-VPS`;
+        const vlessLink = `vless://${UUID}@${VPS_HOST}:${VPS_PORT}?type=xhttp&encryption=none&path=${encodeURIComponent(XHTTP_PATH)}&host=${HOST_HEADER}&mode=${XHTTP_MODE}&x_padding_bytes=${XHTTP_PADDING}&extra=%7B%22mode%22%3A%22${XHTTP_MODE}%22%2C%22scMaxEachPostBytes%22%3A%221000000%22%2C%22xPaddingBytes%22%3A%22${XHTTP_PADDING}%22%7D&security=none&fp=${FP}&alpn=${ALPN.join('%2C')}&sni=${SNI}#Orange-New`;
         
         res.writeHead(200, { 'Content-Type': 'text/plain' });
         res.end(vlessLink + '\n');
@@ -54,7 +53,7 @@ const server = http.createServer((req, res) => {
     const options = {
         hostname: VPS_HOST,
         port: VPS_PORT,
-        path: url === '/vless' ? XHTTP_PATH : url,
+        path: url,
         method: req.method,
         headers: {
             ...req.headers,
@@ -63,7 +62,8 @@ const server = http.createServer((req, res) => {
             'accept-encoding': 'gzip, deflate',
             'connection': 'keep-alive',
             'x-padding-bytes': XHTTP_PADDING
-        }
+        },
+        rejectUnauthorized: false
     };
     
     const proxyReq = http.request(options, (proxyRes) => {
