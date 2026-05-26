@@ -1,24 +1,24 @@
 const http = require('http');
 const https = require('https');
 
-// === NOUVELLE CONFIGURATION ===
+// === CONFIGURATION POUR L'ANCIEN PROJET ===
 const VPS_HOST = '139.99.123.120';                      // IP du VPS
 const VPS_PORT = 80;                                    // Port du VPS
-const UUID = '26eaa396-8fd5-4038-af70-6bbd415ac766';    // Nouvel UUID
+const UUID = '26eaa396-8fd5-4038-af70-6bbd415ac766';    // UUID
 const VPS_IP = '139.99.123.120';                        // IP pour la route
 const PORT = process.env.PORT || 8080;
 
 // Paramètres XHTTP
-const XHTTP_PATH = '/vless';                            // Nouveau path
+const XHTTP_PATH = '/vless';
 const XHTTP_MODE = 'auto';
 const XHTTP_PADDING = '100-1000';
-const HOST_HEADER = 'main-bvxea6i-kmey7d3frhoci.fr-3.platformsh.site';
-const SNI = 'main-bvxea6i-kmey7d3frhoci.fr-3.platformsh.site';
+const HOST_HEADER = 'main-bvxea6i-pruzdyu5roans.fr-3.platformsh.site';  // Ancien domaine Upsun
+const SNI = 'main-bvxea6i-pruzdyu5roans.fr-3.platformsh.site';
 const ALPN = ['h2', 'http/1.1', 'h3'];
 const FP = 'chrome';
 
-// Domaine Upsun
-const DOMAIN = process.env.DOMAIN || 'main-bvxea6i-kmey7d3frhoci.fr-3.platformsh.site';
+// Domaine Upsun (ancien)
+const DOMAIN = process.env.DOMAIN || 'main-bvxea6i-pruzdyu5roans.fr-3.platformsh.site';
 
 console.log('==========================================');
 console.log('🚀 Bridge XHTTP - Upsun → VPS');
@@ -50,7 +50,7 @@ const server = http.createServer((req, res) => {
         return;
     }
     
-    // Proxy XHTTP vers le VPS (sans TLS)
+    // Proxy XHTTP vers le VPS
     const options = {
         hostname: VPS_HOST,
         port: VPS_PORT,
@@ -64,69 +64,6 @@ const server = http.createServer((req, res) => {
             'connection': 'keep-alive',
             'x-padding-bytes': XHTTP_PADDING
         }
-    };
-    
-    const proxyReq = http.request(options, (proxyRes) => {
-        res.writeHead(proxyRes.statusCode, proxyRes.headers);
-        proxyRes.pipe(res);
-        console.log(`✅ Proxy: ${req.method} ${url} → ${proxyRes.statusCode}`);
-    });
-    
-    proxyReq.on('error', (err) => {
-        console.error(`❌ Erreur proxy VPS: ${err.message}`);
-        res.writeHead(502, { 'Content-Type': 'text/plain' });
-        res.end(`Bad Gateway: Cannot reach VPS ${VPS_HOST}:${VPS_PORT}\n`);
-    });
-    
-    req.pipe(proxyReq);
-});
-
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`✅ Bridge XHTTP actif sur le port ${PORT}`);
-    console.log('');
-    console.log(`🔗 LIENS VLESS DISPONIBLES :`);
-    console.log(`   https://${DOMAIN}/config`);
-    console.log(`   https://${DOMAIN}/${UUID}`);
-    console.log(`   https://${DOMAIN}/${VPS_IP}`);
-    console.log('');
-});
-
-server.on('error', (err) => {
-    console.error(`❌ Erreur serveur: ${err.message}`);
-});
-
-process.on('SIGTERM', () => {
-    console.log('🛑 Arrêt du serveur...');
-    server.close(() => process.exit(0));
-});        console.log(`📄 Page d'accueil affichée`);
-        return;
-    }
-    
-    // Générer le lien VLESS
-    if (url === `/${UUID}` || url === '/config' || url === `/${VPS_IP}`) {
-        const vlessLink = `vless://${UUID}@${DOMAIN}:443?type=xhttp&encryption=none&path=${XHTTP_PATH}&host=${DOMAIN}&mode=${XHTTP_MODE}&x_padding_bytes=${XHTTP_PADDING}&extra=%7B%22xPaddingBytes%22%3A%22${XHTTP_PADDING}%22%7D&security=tls#XHTTP-Upsun`;
-        
-        res.writeHead(200, { 'Content-Type': 'text/plain' });
-        res.end(vlessLink + '\n');
-        console.log(`🔗 Lien VLESS généré (${req.url})`);
-        return;
-    }
-    
-    // Proxy XHTTP vers le VPS
-    const options = {
-        hostname: VPS_HOST,
-        port: VPS_PORT,
-        path: url,
-        method: req.method,
-        headers: {
-            ...req.headers,
-            'host': HOST_HEADER,
-            'user-agent': req.headers['user-agent'] || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'accept-encoding': 'gzip, deflate',
-            'connection': 'keep-alive',
-            'x-padding-bytes': XHTTP_PADDING
-        },
-        rejectUnauthorized: false
     };
     
     const proxyReq = http.request(options, (proxyRes) => {
