@@ -1,7 +1,7 @@
 applications:
     app:
         type: nodejs:20
-        size: "M"
+        size: "S"
         web:
             commands:
                 start: node server.js
