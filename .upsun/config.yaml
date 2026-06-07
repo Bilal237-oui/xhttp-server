@@ -3,9 +3,12 @@ applications:
     type: nodejs:20
 
 routes:
-  https://{default}/:
+  https://{default}/vps1:
     type: proxy
     to: http://188.213.28.174:80
+  https://{default}/vps2:
+    type: proxy
+    to: http://188.166.52.176:80
   http://{default}/:
     type: redirect
     to: https://{default}/
