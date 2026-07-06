@@ -7,9 +7,11 @@ const UUID = process.env.UUID || 'f09a960a-4f1b-495f-9962-f1a14e5a7791';
 const VPS_IP = process.env.VPS_IP || VPS_HOST;
 const PORT = process.env.PORT || 8080;
 
-// === PARAMÈTRES WEBSOCKET ===
-const WS_PATH = '/';
-const WS_HOST = process.env.WS_HOST || 'ultrategateworld.benbilal237free.xyz';
+// === PARAMÈTRES XHTTP ===
+const XHTTP_PATH = '/';
+const XHTTP_MODE = 'auto';
+const XHTTP_PADDING = '100-1000';
+const HOST_HEADER = process.env.HOST_HEADER || 'ultrategateworld.benbilal237free.xyz';
 const SNI = process.env.SNI || 'main-bvxea6i-drgozoylycqca.fr-3.platformsh.site';
 const ALPN = ['h2', 'http/1.1', 'h3'];
 const FP = 'chrome';
@@ -27,7 +29,7 @@ const XMUX_SETTINGS = {
 };
 
 console.log('==========================================');
-console.log('🚀 Bridge VLESS WebSocket - Upsun → VPS');
+console.log('🚀 Bridge VLESS XHTTP - Upsun → VPS');
 console.log(`📡 VPS cible: ${VPS_HOST}:${VPS_PORT}`);
 console.log(`🔑 UUID: ${UUID}`);
 console.log(`🌐 Domaine Upsun: ${DOMAIN}`);
@@ -46,18 +48,25 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    // === ROUTE /CONFIG (lien VLESS WebSocket) ===
+    // === ROUTE /CONFIG (lien VLESS XHTTP) ===
     if (url === '/config' || url === `/${UUID}` || url === `/${VPS_IP}`) {
-        // Construction du lien VLESS avec WebSocket
-        const vlessLink = `vless://${UUID}@${VPS_HOST}:${VPS_PORT}?encryption=none&type=ws&path=${encodeURIComponent(WS_PATH)}&host=${WS_HOST}&fp=${FP}&alpn=${ALPN.join('%2C')}&sni=${SNI}&flow=xtls-rprx-vision#VLESS-WS-Upsun`;
+        const extraObj = {
+            mode: XHTTP_MODE,
+            scMaxEachPostBytes: "1000000",
+            xPaddingBytes: XHTTP_PADDING,
+            xmux: XMUX_SETTINGS
+        };
+        const extraEncoded = encodeURIComponent(JSON.stringify(extraObj));
+        
+        const vlessLink = `vless://${UUID}@${VPS_HOST}:${VPS_PORT}?type=xhttp&encryption=none&path=${encodeURIComponent(XHTTP_PATH)}&host=${HOST_HEADER}&mode=${XHTTP_MODE}&x_padding_bytes=${XHTTP_PADDING}&extra=${extraEncoded}&fp=${FP}&alpn=${ALPN.join('%2C')}&sni=${SNI}#XHTTP-Upsun-Bridge`;
         
         res.writeHead(200, { 'Content-Type': 'text/plain' });
         res.end(vlessLink + '\n');
-        console.log(`🔗 Lien VLESS WS généré (${url})`);
+        console.log(`🔗 Lien VLESS XHTTP généré (${url})`);
         return;
     }
 
-    // === PROXY WEBSOCKET VERS LE VPS ===
+    // === PROXY XHTTP VERS LE VPS ===
     const options = {
         hostname: VPS_HOST,
         port: VPS_PORT,
@@ -65,11 +74,13 @@ const server = http.createServer((req, res) => {
         method: req.method,
         headers: {
             ...req.headers,
-            'host': WS_HOST,
+            'host': HOST_HEADER,
             'user-agent': req.headers['user-agent'] || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             'accept-encoding': 'gzip, deflate',
             'connection': 'keep-alive',
-            'upgrade': 'websocket'
+            'x-padding-bytes': XHTTP_PADDING,
+            'x-mux-concurrency': XMUX_SETTINGS.maxConcurrency,
+            'x-mux-reuse': XMUX_SETTINGS.cMaxReuseTimes
         },
         rejectUnauthorized: false
     };
@@ -90,7 +101,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(`✅ Bridge VLESS WS actif sur le port ${PORT}`);
+    console.log(`✅ Bridge VLESS XHTTP actif sur le port ${PORT}`);
     console.log(`🔗 LIENS VLESS DISPONIBLES :`);
     console.log(`   https://${DOMAIN}/config`);
     console.log(`   https://${DOMAIN}/${UUID}`);
