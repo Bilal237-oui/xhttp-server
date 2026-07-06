@@ -1,29 +1,44 @@
 const http = require('http');
 
-// Récupérer et parser la variable DB_CONFIG
+// ⭐ L'IP STATIQUE de votre VPS
+const VPS_IP = '188.213.28.174';
+
+// ⭐ Configuration par défaut (utilisée si DB_CONFIG est absente)
+const DEFAULT_CONFIG = {
+    host: 'moust-x.benbilal237free.xyz',
+    port: 80,
+    uuid: '1ce34710-da69-43d3-b28d-1f3d5e2b6385',
+    protocol: 'xhttp',
+    path: '/',
+    mode: 'auto',
+    padding: '100-1000',
+    security: 'none'
+};
+
+// Récupérer et parser la variable DB_CONFIG (si elle existe)
 let dbConfig = null;
 try {
     if (process.env.DB_CONFIG) {
         dbConfig = JSON.parse(process.env.DB_CONFIG);
-        console.log('✅ Configuration VLESS chargée :');
-        console.log(`   Host: ${dbConfig.host}:${dbConfig.port}`);
-        console.log(`   UUID: ${dbConfig.uuid}`);
-        console.log(`   Protocole: ${dbConfig.protocol}`);
-        console.log(`   Path: ${dbConfig.path}`);
-        console.log(`   Mode: ${dbConfig.mode}`);
-        console.log(`   Padding: ${dbConfig.padding}`);
-        console.log(`   Sécurité: ${dbConfig.security}`);
+        console.log('✅ Configuration VLESS chargée depuis DB_CONFIG');
     } else {
-        console.error('❌ Variable DB_CONFIG non trouvée !');
-        process.exit(1);
+        console.log('ℹ️  Variable DB_CONFIG non trouvée, utilisation de la configuration par défaut');
+        dbConfig = DEFAULT_CONFIG;
     }
+    
+    console.log('📋 Configuration utilisée :');
+    console.log(`   Host: ${dbConfig.host}:${dbConfig.port}`);
+    console.log(`   UUID: ${dbConfig.uuid}`);
+    console.log(`   Protocole: ${dbConfig.protocol}`);
+    console.log(`   Path: ${dbConfig.path}`);
+    console.log(`   Mode: ${dbConfig.mode}`);
+    console.log(`   Padding: ${dbConfig.padding}`);
+    console.log(`   Sécurité: ${dbConfig.security}`);
+    
 } catch (e) {
-    console.error('❌ Erreur de parsing JSON :', e.message);
-    process.exit(1);
+    console.error('❌ Erreur de parsing JSON, utilisation de la config par défaut');
+    dbConfig = DEFAULT_CONFIG;
 }
-
-// ⭐ L'IP STATIQUE de votre VPS
-const VPS_IP = '188.213.28.174';
 
 // Construire l'URL de connexion VLESS avec IP
 function buildVlessUrl(config, useIP = true) {
@@ -62,6 +77,14 @@ const server = http.createServer((req, res) => {
             font-family: monospace;
             font-size: 14px;
         }
+        .url-box a {
+            color: #2ecc71;
+            text-decoration: none;
+        }
+        .url-box a:hover {
+            text-decoration: underline;
+            color: #27ae60;
+        }
         .label { font-weight: bold; color: #2d3436; }
         .ip-badge { 
             background: #e74c3c; 
@@ -71,13 +94,12 @@ const server = http.createServer((req, res) => {
             font-size: 16px;
             font-weight: bold;
         }
-        .host-badge {
-            background: #3498db;
+        .default-badge {
+            background: #f39c12;
             color: white;
             padding: 4px 12px;
             border-radius: 20px;
-            font-size: 16px;
-            font-weight: bold;
+            font-size: 14px;
         }
         hr { border: 1px solid #eee; margin: 20px 0; }
         .btn {
@@ -88,13 +110,38 @@ const server = http.createServer((req, res) => {
             text-decoration: none;
             border-radius: 5px;
             margin: 5px 0;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
         }
         .btn:hover { background: #27ae60; }
+        .btn-copy {
+            background: #3498db;
+        }
+        .btn-copy:hover { background: #2980b9; }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+        .success-msg {
+            color: #2ecc71;
+            font-weight: bold;
+            display: none;
+            margin-left: 10px;
+        }
+        .note {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <h1>✅ Serveur Opérationnel</h1>
     <p>Mode Multiplexé Actif.</p>
+    ${!process.env.DB_CONFIG ? '<p><span class="default-badge">⚙️ Configuration par défaut</span></p>' : ''}
     <hr>
     <h2>Configuration VLESS :</h2>
     <div class="info">
@@ -114,20 +161,73 @@ const server = http.createServer((req, res) => {
     <h2>🔗 Liens de connexion :</h2>
     
     <h3>🌐 Avec IP (Recommandé) :</h3>
-    <div class="url-box">${vlessUrlIP}</div>
-    <br>
-    <a href="${vlessUrlIP}" class="btn" target="_blank">📋 Copier le lien</a>
+    <div class="url-box">
+        <a href="${vlessUrlIP}" target="_blank">${vlessUrlIP}</a>
+    </div>
+    <div class="btn-group">
+        <a href="${vlessUrlIP}" class="btn" target="_blank">🔗 Ouvrir le lien</a>
+        <button class="btn btn-copy" onclick="copyToClipboard('${vlessUrlIP}')">📋 Copier</button>
+        <span id="copyMsg" class="success-msg">✅ Copié !</span>
+    </div>
     
     <hr>
     
     <h3>🏷️ Avec Hostname :</h3>
-    <div class="url-box">${vlessUrlHost}</div>
+    <div class="url-box">
+        <a href="${vlessUrlHost}" target="_blank">${vlessUrlHost}</a>
+    </div>
+    <div class="btn-group">
+        <a href="${vlessUrlHost}" class="btn" target="_blank">🔗 Ouvrir le lien</a>
+        <button class="btn btn-copy" onclick="copyToClipboard('${vlessUrlHost}')">📋 Copier</button>
+        <span id="copyMsgHost" class="success-msg">✅ Copié !</span>
+    </div>
     
     <hr>
-    <p style="font-size: 12px; color: #7f8c8d;">
+    <div class="note">
         ⚡ Le lien avec l'IP statique ${VPS_IP} est plus rapide car il évite la résolution DNS.<br>
-        📱 Copiez le lien et importez-le dans votre client VLESS (Xray, v2rayNG, etc.)
-    </p>
+        📱 Copiez le lien et importez-le dans votre client VLESS (Xray, v2rayNG, etc.)<br>
+        💡 Si le lien ne s'ouvre pas automatiquement, copiez-le et collez-le dans votre client VLESS.
+    </div>
+
+    <script>
+        function copyToClipboard(text) {
+            // Utiliser l'API Clipboard si disponible
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showSuccess('copyMsg');
+                }).catch(() => {
+                    fallbackCopy(text);
+                });
+            } else {
+                fallbackCopy(text);
+            }
+        }
+
+        function fallbackCopy(text) {
+            // Fallback pour navigateurs plus anciens
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showSuccess('copyMsg');
+            } catch (err) {
+                alert('Impossible de copier. Copiez manuellement le lien.');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function showSuccess(id) {
+            const msg = document.getElementById(id);
+            msg.style.display = 'inline';
+            setTimeout(() => {
+                msg.style.display = 'none';
+            }, 3000);
+        }
+    </script>
 </body>
 </html>
         `);
@@ -143,5 +243,6 @@ server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Serveur en écoute sur le port ${PORT}`);
     console.log(`📡 URL du serveur : https://main-bvxea6i-vhgmt4n3y4whs.fr-3.platformsh.site`);
     console.log(`🌐 IP VPS : ${VPS_IP}`);
+    console.log(`📋 Configuration source : ${process.env.DB_CONFIG ? 'DB_CONFIG' : 'DÉFAUT'}`);
     console.log(`🔗 Lien VLESS généré : ${buildVlessUrl(dbConfig, true)}`);
 });
