@@ -3,4 +3,9 @@ applications:
     type: nodejs:20
     web:
       commands:
-        start: npm start
+        start: node server.js
+
+routes:
+  "https://{default}/":
+    type: upstream
+    upstream: "app:http"
