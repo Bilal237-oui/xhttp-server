@@ -52,14 +52,9 @@ function buildVlessUrl(config, useIP = true) {
            `security=${config.security}`;
 }
 
-// Serveur HTTP pour afficher les infos
-const server = http.createServer((req, res) => {
-    if (req.url === '/') {
-        const vlessUrlIP = buildVlessUrl(dbConfig, true);
-        const vlessUrlHost = buildVlessUrl(dbConfig, false);
-        
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(`
+// Générer une page HTML (réutilisable)
+function generateHtmlPage(vlessUrlIP, vlessUrlHost, showDefaultBadge = false) {
+    return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -136,12 +131,25 @@ const server = http.createServer((req, res) => {
             color: #7f8c8d;
             margin-top: 10px;
         }
+        .ip-link {
+            display: inline-block;
+            background: #e74c3c;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        .ip-link:hover {
+            background: #c0392b;
+        }
     </style>
 </head>
 <body>
     <h1>✅ Serveur Opérationnel</h1>
     <p>Mode Multiplexé Actif.</p>
-    ${!process.env.DB_CONFIG ? '<p><span class="default-badge">⚙️ Configuration par défaut</span></p>' : ''}
+    ${showDefaultBadge ? '<p><span class="default-badge">⚙️ Configuration par défaut</span></p>' : ''}
     <hr>
     <h2>Configuration VLESS :</h2>
     <div class="info">
@@ -183,15 +191,21 @@ const server = http.createServer((req, res) => {
     </div>
     
     <hr>
+    
+    <h2>🌍 Accès direct par IP :</h2>
+    <p>Utilisez ce lien direct pour accéder à la configuration :</p>
+    <a href="/${VPS_IP}" class="ip-link">🔗 /${VPS_IP}</a>
+    
+    <hr>
     <div class="note">
         ⚡ Le lien avec l'IP statique ${VPS_IP} est plus rapide car il évite la résolution DNS.<br>
         📱 Copiez le lien et importez-le dans votre client VLESS (Xray, v2rayNG, etc.)<br>
-        💡 Si le lien ne s'ouvre pas automatiquement, copiez-le et collez-le dans votre client VLESS.
+        💡 Si le lien ne s'ouvre pas automatiquement, copiez-le et collez-le dans votre client VLESS.<br>
+        🖥️ Accédez à cette page via : <code>/${VPS_IP}</code>
     </div>
 
     <script>
         function copyToClipboard(text) {
-            // Utiliser l'API Clipboard si disponible
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(text).then(() => {
                     showSuccess('copyMsg');
@@ -204,7 +218,6 @@ const server = http.createServer((req, res) => {
         }
 
         function fallbackCopy(text) {
-            // Fallback pour navigateurs plus anciens
             const textarea = document.createElement('textarea');
             textarea.value = text;
             textarea.style.position = 'fixed';
@@ -230,11 +243,46 @@ const server = http.createServer((req, res) => {
     </script>
 </body>
 </html>
-        `);
-    } else {
-        res.writeHead(404);
-        res.end('Not Found\n');
+    `;
+}
+
+// Créer le serveur HTTP
+const server = http.createServer((req, res) => {
+    const url = req.url;
+    
+    // ⭐ NOUVEAU : Gérer la route /188.213.28.174
+    if (url === `/${VPS_IP}`) {
+        const vlessUrlIP = buildVlessUrl(dbConfig, true);
+        const vlessUrlHost = buildVlessUrl(dbConfig, false);
+        const showDefaultBadge = !process.env.DB_CONFIG;
+        
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(generateHtmlPage(vlessUrlIP, vlessUrlHost, showDefaultBadge));
+        return;
     }
+    
+    // Route racine (/)
+    if (url === '/') {
+        const vlessUrlIP = buildVlessUrl(dbConfig, true);
+        const vlessUrlHost = buildVlessUrl(dbConfig, false);
+        const showDefaultBadge = !process.env.DB_CONFIG;
+        
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(generateHtmlPage(vlessUrlIP, vlessUrlHost, showDefaultBadge));
+        return;
+    }
+    
+    // Route pour les liens VLESS (redirection)
+    if (url.startsWith('/vless/')) {
+        const vlessUrlIP = buildVlessUrl(dbConfig, true);
+        res.writeHead(302, { 'Location': vlessUrlIP });
+        res.end();
+        return;
+    }
+    
+    // Toute autre route → 404
+    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('404 - Page non trouvée\n');
 });
 
 // Utiliser le PORT fourni par Upsun
@@ -245,4 +293,5 @@ server.listen(PORT, '0.0.0.0', () => {
     console.log(`🌐 IP VPS : ${VPS_IP}`);
     console.log(`📋 Configuration source : ${process.env.DB_CONFIG ? 'DB_CONFIG' : 'DÉFAUT'}`);
     console.log(`🔗 Lien VLESS généré : ${buildVlessUrl(dbConfig, true)}`);
+    console.log(`🖥️ Accès direct : /${VPS_IP}`);
 });
